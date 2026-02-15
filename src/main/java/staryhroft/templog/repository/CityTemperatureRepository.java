@@ -10,7 +10,6 @@ import staryhroft.templog.entity.CityTemperature;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface CityTemperatureRepository extends JpaRepository<CityTemperature, Long> {
 
     Optional<CityTemperature> findFirstByCityOrderByTimestampDesc(City city);
