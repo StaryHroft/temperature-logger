@@ -29,10 +29,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,"/api/cities").permitAll()     //список городов доступен всем
+                        .requestMatchers(HttpMethod.GET,"/api/cities/count").hasRole("ADMIN")      //количество только админ
                         .requestMatchers(HttpMethod.GET,"/api/cities/{name}").hasAnyRole("USER", "ADMIN")     //город для юзеров и админов
                         .requestMatchers(HttpMethod.POST,"/api/cities/{name}/favorite").hasAnyRole("USER", "ADMIN")     //добавление в избранное для юзеров и админов
                         .requestMatchers(HttpMethod.DELETE,"/api/cities/{name}/favorite").hasAnyRole("USER", "ADMIN")     //удаление из избранного для юзеров и админов
-                        .requestMatchers(HttpMethod.GET,"/api/cities/count").hasRole("ADMIN")      //количество только админ
                         .requestMatchers(HttpMethod.DELETE,"/api/cities/{name}").hasRole("ADMIN")     //удаление города (DELETE) только админ
                         .requestMatchers(HttpMethod.DELETE,"/api/cities").hasRole("ADMIN")        //удаление всех городов (DELETE) только админ
                         .anyRequest().authenticated()
