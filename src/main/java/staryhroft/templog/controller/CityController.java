@@ -1,5 +1,6 @@
 package staryhroft.templog.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import staryhroft.templog.dto.CityDetailDto;
 import staryhroft.templog.dto.CityListViewDto;
+import staryhroft.templog.dto.CityRequestDto;
 import staryhroft.templog.service.CityService;
 import staryhroft.templog.service.WeatherService;
 
@@ -27,9 +29,9 @@ public class CityController {
     }
 
     //Показать город по названию
-    @GetMapping("/{cityName}")
-    public CityDetailDto getCity(@PathVariable String cityName){
-        return cityService.getOrUpdateCity(cityName);
+    @PostMapping("/city")
+    public CityDetailDto getOrCreateCity(@Valid @RequestBody CityRequestDto request){
+        return cityService.getOrUpdateCity(request.getName());
     }
 
     //Получить количество городов
@@ -39,10 +41,10 @@ public class CityController {
     }
 
     //Удалить город по названию
-    @DeleteMapping("/{cityName}")
+    @DeleteMapping("/city")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeCity(@PathVariable String cityName){
-        cityService.deleteCity(cityName);
+    public void removeCity(@Valid @RequestBody CityRequestDto request){
+        cityService.deleteCity(request.getName());
     }
 
     //Удалить все города
@@ -53,16 +55,16 @@ public class CityController {
     }
 
     //Добавить город в избранное
-    @PostMapping("/{cityName}/favorite")
+    @PostMapping("/favorite/add")
     @ResponseStatus(HttpStatus.OK)
-    public void addCityToFavorites(@PathVariable String cityName){
-        cityService.markAsFavorite(cityName);
+    public void addCityToFavorites(@Valid @RequestBody CityRequestDto request){
+        cityService.markAsFavorite(request.getName());
     }
 
     //Удалить город из избранного
-    @DeleteMapping("/{cityName}/favorite")
+    @PostMapping("/favorite/remove")
     @ResponseStatus(HttpStatus.OK)
-    public void removeCityFromFavorites(@PathVariable String cityName){
-        cityService.unmarkFromFavorite(cityName);
+    public void removeCityFromFavorites(@Valid @RequestBody CityRequestDto request){
+        cityService.unmarkFromFavorite(request.getName());
     }
 }

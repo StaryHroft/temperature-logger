@@ -11,6 +11,7 @@ import staryhroft.templog.entity.City;
 import staryhroft.templog.entity.CityTemperature;
 import staryhroft.templog.entity.enums.FavoriteStatus;
 import staryhroft.templog.exception.CityNotFoundException;
+import staryhroft.templog.exception.FavoritesLimitExceededException;
 import staryhroft.templog.repository.CityRepository;
 import staryhroft.templog.repository.CityTemperatureRepository;
 
@@ -123,20 +124,20 @@ public class CityService {
     //Добавить город в избранное
     @Transactional
     public void markAsFavorite(String cityName) {
-        City city = cityRepository.findByName(cityName).orElse(null);
-        if (city == null) {
-            log.warn("Город {} не найден", cityName);
-            return;
-        }
+        City city = cityRepository.findByName(cityName)
+                .orElseThrow(() -> new CityNotFoundException(cityName));
+
         if (city.getFavoriteStatus() == FavoriteStatus.FAVORITE) {
             log.debug("Город {} уже в избранном", cityName);
             return;
         }
+
         long favoriteCount = cityRepository.countByFavoriteStatus(FavoriteStatus.FAVORITE);
         if (favoriteCount >= 3) {
-            log.warn("Нельзя добавить больше 3 избранных городов");
-            return;
+            throw new FavoritesLimitExceededException(
+            "Нельзя добавить больше 3 избранных городов. Удалите один из текущих избранных");
         }
+
         city.setFavoriteStatus(FavoriteStatus.FAVORITE);
         cityRepository.save(city);
         log.info("Город {} добавлен в избранное", cityName);
@@ -145,14 +146,11 @@ public class CityService {
     //Удалить город из избранного
     @Transactional
     public void unmarkFromFavorite(String cityName) {
-        City city = cityRepository.findByName(cityName).orElse(null);
-        if (city == null) {
-            log.warn("Город {} не найден", cityName);
-            return;
-        }
+        City city = cityRepository.findByName(cityName)
+                .orElseThrow(() -> new CityNotFoundException(cityName));
+
         if (city.getFavoriteStatus() == FavoriteStatus.NOT_FAVORITE) {
-            log.debug("Город {} уже не в избранном", cityName);
-            return;
+            throw new FavoritesLimitExceededException("Город " + cityName + " не находится в избранном");
         }
         city.setFavoriteStatus(FavoriteStatus.NOT_FAVORITE);
         cityRepository.save(city);
