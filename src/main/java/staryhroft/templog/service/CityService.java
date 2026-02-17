@@ -4,9 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staryhroft.templog.client.WeatherApiClient;
+import staryhroft.templog.client.WeatherApiIntegration;
 import staryhroft.templog.dto.CityDetailDto;
-import staryhroft.templog.dto.CityListViewDto;
 import staryhroft.templog.entity.City;
 import staryhroft.templog.entity.CityTemperature;
 import staryhroft.templog.entity.enums.FavoriteStatus;
@@ -28,30 +27,40 @@ import java.util.stream.Stream;
 public class CityService {
     private final CityRepository cityRepository;
     private final CityTemperatureRepository temperatureRepository;
-    private final WeatherApiClient weatherApiClient;
+    private final WeatherApiIntegration weatherApiIntegration;
 
     //Получить список городов
-    public List<CityListViewDto> getAllCities() {
+    public List<CityDetailDto> getAllCities() {
         return Stream.concat(
                         cityRepository.findByFavoriteStatusOrderByIdDesc(FavoriteStatus.FAVORITE).stream(),
                         cityRepository.findByFavoriteStatusOrderByIdDesc(FavoriteStatus.NOT_FAVORITE).stream()
                 )
-                .map(city -> new CityListViewDto(
-                        city.getName(),
-                        city.getFavoriteStatus() == FavoriteStatus.FAVORITE))
+                .map(city -> {
+                    CityTemperature lastTemp = temperatureRepository
+                            .findFirstByCityOrderByTimestampDesc(city)
+                            .orElse(null);
+                    Double temperature = lastTemp != null ? lastTemp.getTemperature() : null;
+                    LocalDateTime time = lastTemp != null ? lastTemp.getTimestamp() : null;
+                    return new CityDetailDto(
+                            city.getName(),
+                            city.getFavoriteStatus(),
+                            temperature,
+                            time
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
     //Получить сведения о городе по его названию
     @Transactional
-    public CityDetailDto getOrUpdateCity(String cityName){
+    public CityDetailDto getOrUpdateCity(String cityName) {
         City city = findOrCreateCity(cityName);
         Double currentTemp = getCurrentTemperatureForCity(city);
         return buildCityDetailDto(city, currentTemp);
     }
 
     //Найти или сохранить город
-    private City findOrCreateCity(String cityName){
+    private City findOrCreateCity(String cityName) {
         return cityRepository.findByName(cityName)
                 .orElseGet(() -> {
                     City newCity = City.builder()
@@ -77,7 +86,7 @@ public class CityService {
             }
         }
         //Если нет данных или они устарели - запрос из АПИ и сохранение
-        Double freshTemp = weatherApiClient.getCurrentTemperature(city.getName());
+        Double freshTemp = weatherApiIntegration.getCurrentTemperature(city.getName());
         CityTemperature newRecord = CityTemperature.builder()
                 .city(city)
                 .temperature(freshTemp)
@@ -88,7 +97,7 @@ public class CityService {
     }
 
     //Создание ДТО
-    private CityDetailDto buildCityDetailDto(City city, Double currentTemp){
+    private CityDetailDto buildCityDetailDto(City city, Double currentTemp) {
         CityTemperature latest = temperatureRepository
                 .findFirstByCityOrderByTimestampDesc(city)
                 .orElseThrow(() -> new IllegalStateException("Температура не найдена"));
@@ -135,7 +144,7 @@ public class CityService {
         long favoriteCount = cityRepository.countByFavoriteStatus(FavoriteStatus.FAVORITE);
         if (favoriteCount >= 3) {
             throw new FavoritesLimitExceededException(
-            "Нельзя добавить больше 3 избранных городов. Удалите один из текущих избранных");
+                    "Нельзя добавить больше 3 избранных городов. Удалите один из текущих избранных");
         }
 
         city.setFavoriteStatus(FavoriteStatus.FAVORITE);

@@ -10,18 +10,16 @@ import org.springframework.web.util.UriComponentsBuilder;
 import staryhroft.templog.dto.WeatherResponseDto;
 import staryhroft.templog.exception.WeatherApiCityNotFoundException;
 
-import static org.springframework.web.util.UriComponentsBuilder.*;
-
 @Component
 @Slf4j
-public class WeatherApiClient {
+public class WeatherApiIntegration {
     private final RestTemplate restTemplate;
     private final String apiKey;
     private final String apiUrl;
 
-    public WeatherApiClient(RestTemplate restTemplate,
-                            @Value("${weather.api.key}") String apiKey,
-                            @Value("${weather.api.url}") String apiUrl) {
+    public WeatherApiIntegration(RestTemplate restTemplate,
+                                 @Value("${weather.api.key}") String apiKey,
+                                 @Value("${weather.api.url}") String apiUrl) {
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;
         this.apiUrl = apiUrl;

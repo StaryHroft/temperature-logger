@@ -16,8 +16,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
@@ -28,7 +26,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET,"/api/cities").permitAll()     //список городов доступен всем
+                        .requestMatchers(HttpMethod.GET,"/api/cities").hasAnyRole("USER", "ADMIN")    //список городов доступен всем
                         .requestMatchers(HttpMethod.GET,"/api/cities/count").hasRole("ADMIN")      //количество только админ
                         .requestMatchers(HttpMethod.POST,"/api/cities/city").hasAnyRole("USER", "ADMIN")     //город для юзеров и админов
                         .requestMatchers(HttpMethod.POST,"/api/cities/favorite/add").hasAnyRole("USER", "ADMIN")     //добавление в избранное для юзеров и админов

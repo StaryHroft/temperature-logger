@@ -4,13 +4,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import staryhroft.templog.dto.CityDetailDto;
-import staryhroft.templog.dto.CityListViewDto;
 import staryhroft.templog.dto.CityRequestDto;
 import staryhroft.templog.service.CityService;
-import staryhroft.templog.service.WeatherService;
 
 import java.util.List;
 
@@ -24,7 +21,7 @@ public class CityController {
 
     //Показать список городов
     @GetMapping
-    public List<CityListViewDto> fetchAllCities(){
+    public List<CityDetailDto> fetchAllCities(){
         return cityService.getAllCities();
     }
 
