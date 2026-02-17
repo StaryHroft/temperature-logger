@@ -5,12 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staryhroft.templog.client.WeatherApiIntegration;
+import staryhroft.templog.dto.ApiResponse;
 import staryhroft.templog.dto.CityDetailDto;
 import staryhroft.templog.entity.City;
 import staryhroft.templog.entity.CityTemperature;
 import staryhroft.templog.entity.enums.FavoriteStatus;
-import staryhroft.templog.exception.CityNotFoundException;
-import staryhroft.templog.exception.FavoritesLimitExceededException;
+import staryhroft.templog.exception.business.CityNotFoundException;
+import staryhroft.templog.exception.business.FavoritesLimitExceededException;
 import staryhroft.templog.repository.CityRepository;
 import staryhroft.templog.repository.CityTemperatureRepository;
 
@@ -30,11 +31,12 @@ public class CityService {
     private final WeatherApiIntegration weatherApiIntegration;
 
     //Получить список городов
-    public List<CityDetailDto> getAllCities() {
-        return Stream.concat(
+    public ApiResponse<List<CityDetailDto>> getAllCities() {
+        List<City> cities = Stream.concat(
                         cityRepository.findByFavoriteStatusOrderByIdDesc(FavoriteStatus.FAVORITE).stream(),
                         cityRepository.findByFavoriteStatusOrderByIdDesc(FavoriteStatus.NOT_FAVORITE).stream()
-                )
+                ).collect(Collectors.toList());
+        List<CityDetailDto> cityDtos = cities.stream()
                 .map(city -> {
                     CityTemperature lastTemp = temperatureRepository
                             .findFirstByCityOrderByTimestampDesc(city)
@@ -49,6 +51,10 @@ public class CityService {
                     );
                 })
                 .collect(Collectors.toList());
+
+        String message = cityDtos.isEmpty() ? "Список городов пуст" : null;
+        return new ApiResponse<>(LocalDateTime.now(), message, cityDtos);
+
     }
 
     //Получить сведения о городе по его названию

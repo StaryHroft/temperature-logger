@@ -1,9 +1,8 @@
-package staryhroft.templog.exception;
+package staryhroft.templog.exception.business;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
 public class CityNotFoundException extends RuntimeException {
     public CityNotFoundException(String cityName) {
 

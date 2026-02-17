@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import staryhroft.templog.dto.ApiResponse;
 import staryhroft.templog.dto.CityDetailDto;
 import staryhroft.templog.dto.CityRequestDto;
 import staryhroft.templog.service.CityService;
@@ -21,7 +22,7 @@ public class CityController {
 
     //Показать список городов
     @GetMapping
-    public List<CityDetailDto> fetchAllCities(){
+    public ApiResponse<List<CityDetailDto>> fetchAllCities(){
         return cityService.getAllCities();
     }
 
@@ -39,28 +40,24 @@ public class CityController {
 
     //Удалить город по названию
     @DeleteMapping("/city")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeCity(@Valid @RequestBody CityRequestDto request){
         cityService.deleteCity(request.getName());
     }
 
     //Удалить все города
     @DeleteMapping
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeAllCities(){
         cityService.deleteAllCities();
     }
 
     //Добавить город в избранное
     @PostMapping("/favorite/add")
-    @ResponseStatus(HttpStatus.OK)
     public void addCityToFavorites(@Valid @RequestBody CityRequestDto request){
         cityService.markAsFavorite(request.getName());
     }
 
     //Удалить город из избранного
     @PostMapping("/favorite/remove")
-    @ResponseStatus(HttpStatus.OK)
     public void removeCityFromFavorites(@Valid @RequestBody CityRequestDto request){
         cityService.unmarkFromFavorite(request.getName());
     }

@@ -1,77 +1,99 @@
 package staryhroft.templog.advice;
 
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import staryhroft.templog.exception.CityNotFavoriteException;
-import staryhroft.templog.exception.CityNotFoundException;
-import staryhroft.templog.exception.FavoritesLimitExceededException;
-import staryhroft.templog.exception.WeatherApiCityNotFoundException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import staryhroft.templog.exception.business.CityNotFavoriteException;
+import staryhroft.templog.exception.business.CityNotFoundException;
+import staryhroft.templog.exception.business.FavoritesLimitExceededException;
+import staryhroft.templog.exception.business.WeatherApiCityNotFoundException;
+import staryhroft.templog.exception.message.NoHandlerFoundErrorMessageBuilder;
+import staryhroft.templog.exception.message.ValidationErrorMessageBuilder;
+import staryhroft.templog.exception.validation.InvalidCityNameException;
+import staryhroft.templog.dto.ErrorResponse;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoHandlerFound(NoHandlerFoundException ex) {
+        String message = NoHandlerFoundErrorMessageBuilder.build(ex);
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                "Ресурс не найден",
+                message
+        );
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex){
+        String message = ValidationErrorMessageBuilder.build(ex);
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Ошибка запроса",
+                message
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(WeatherApiCityNotFoundException.class)
-    public ResponseEntity<Object> handleWeatherApiCityNotFound(WeatherApiCityNotFoundException ex){
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Not Found");
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body,HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorResponse> handleWeatherApiCityNotFound(WeatherApiCityNotFoundException ex) {
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                "Город не найден во внешнем сервисе",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(response, status);
     }
 
-    @ExceptionHandler(FavoritesLimitExceededException.class)
-    public ResponseEntity<Object> handleFavoritesLimitExceeded(FavoritesLimitExceededException ex){
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Bad Request");
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body,HttpStatus.BAD_REQUEST);
+
+
+
+    @ExceptionHandler({InvalidCityNameException.class,
+            FavoritesLimitExceededException.class,
+            CityNotFavoriteException.class})
+    public ResponseEntity<ErrorResponse> handleBadRequestExceptions(RuntimeException ex) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                "Ошибка запроса",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(response, status);
     }
 
-    @ExceptionHandler(CityNotFoundException.class)
-    public ResponseEntity<Object> handleCityNotFound(CityNotFoundException ex){
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Not Found");
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body,HttpStatus.NOT_FOUND);
+    @ExceptionHandler({CityNotFoundException.class,
+            WeatherApiCityNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFoundExceptions(RuntimeException ex) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                "Ресурс не найден",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(response, status);
     }
 
-    @ExceptionHandler(CityNotFavoriteException.class)
-    public ResponseEntity<Object> handleCityNotFavorite(CityNotFavoriteException ex){
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Bad Request");
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body,HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Validation Error");
-
-        List<String> errors = ex.getConstraintViolations().stream()
-                .map(violation -> violation.getMessage())
-                .collect(Collectors.toList());
-        body.put("messages", errors);
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
-    }
 
 }
