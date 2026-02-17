@@ -1,4 +1,4 @@
-package staryhroft.templog.exception.business;
+package staryhroft.templog.exception.external;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class WeatherApiCityNotFoundException extends RuntimeException {
     public WeatherApiCityNotFoundException(String cityName) {
         super(String.format("Город '%s' не найден в сервисе погоды. " +
-                "Проверьте правильность написания названия.", cityName));
+                "Проверьте правильность названия.", cityName));
     }
 }

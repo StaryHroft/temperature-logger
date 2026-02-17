@@ -6,6 +6,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class CityNotFoundException extends RuntimeException {
     public CityNotFoundException(String cityName) {
 
-        super("Город " + cityName + " не найден");
+        super("Город " + cityName + " отсутствует в базе данных");
     }
 }

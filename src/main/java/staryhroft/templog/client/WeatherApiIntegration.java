@@ -8,7 +8,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import staryhroft.templog.dto.WeatherResponseDto;
-import staryhroft.templog.exception.business.WeatherApiCityNotFoundException;
+import staryhroft.templog.exception.external.WeatherApiCityNotFoundException;
 
 @Component
 @Slf4j
