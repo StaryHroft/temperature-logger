@@ -16,6 +16,9 @@ import staryhroft.templog.exception.business.CityNotFoundException;
 import staryhroft.templog.exception.business.FavoritesLimitExceededException;
 import staryhroft.templog.repository.CityRepository;
 import staryhroft.templog.repository.CityTemperatureRepository;
+import staryhroft.templog.service.city.CityFinder;
+import staryhroft.templog.service.city.CityTempetratureUpdater;
+import staryhroft.templog.service.favorite.FavoriteManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +33,9 @@ import java.util.stream.Stream;
 public class CityService {
     private final CityRepository cityRepository;
     private final CityTemperatureRepository temperatureRepository;
-    private final WeatherApiIntegration weatherApiIntegration;
+    private final CityFinder cityFinder;
+    private final CityTempetratureUpdater tempetratureUpdater;
+    private final FavoriteManager favoriteManager;
 
     //Получить список городов
     public ApiResponse<List<CityDetailDto>> getAllCities() {
@@ -62,60 +67,15 @@ public class CityService {
     //Получить сведения о городе по его названию
     @Transactional
     public CityDetailDto getOrUpdateCity(String cityName) {
-        City city = findOrCreateCity(cityName);
-        Double currentTemp = getCurrentTemperatureForCity(city);
-        return buildCityDetailDto(city, currentTemp);
-    }
-
-    //Найти или сохранить город
-    private City findOrCreateCity(String cityName) {
-        return cityRepository.findByName(cityName)
-                .orElseGet(() -> {
-                    City newCity = City.builder()
-                            .name(cityName)
-                            .favoriteStatus(FavoriteStatus.NOT_FAVORITE)
-                            .build();
-                    cityRepository.save(newCity);
-                    log.info("Создан новый город: {}", cityName);
-                    return newCity;
-                });
-    }
-
-    //Проверка температуры
-    private Double getCurrentTemperatureForCity(City city) {
-        Optional<CityTemperature> lastTempOpt = temperatureRepository.findFirstByCityOrderByTimestampDesc(city);
-
-        //Проверка актуальности
-        if (lastTempOpt.isPresent()) {
-            LocalDateTime lastTime = lastTempOpt.get().getTimestamp();
-            if (lastTime.isAfter(LocalDateTime.now().minusDays(1))) {
-                log.debug("Температура для города {} актуальна", city.getName());
-                return lastTempOpt.get().getTemperature();
-            }
-        }
-        //Если нет данных или они устарели - запрос из АПИ и сохранение
-        Double freshTemp = weatherApiIntegration.getCurrentTemperature(city.getName());
-        CityTemperature newRecord = CityTemperature.builder()
-                .city(city)
-                .temperature(freshTemp)
-                .build();
-        temperatureRepository.save(newRecord);
-        log.info("Получена и сохранена новая температура для {}", city.getName());
-        return freshTemp;
-    }
-
-    //Создание ДТО
-    private CityDetailDto buildCityDetailDto(City city, Double currentTemp) {
-        CityTemperature latest = temperatureRepository
-                .findFirstByCityOrderByTimestampDesc(city)
-                .orElseThrow(() -> new IllegalStateException("Температура не найдена"));
-
+        City city = cityFinder.findOrCreate(cityName);
+        tempetratureUpdater.getFreshTemperature(city);
+        CityTemperature latest = tempetratureUpdater.getLatestRecord(city);
         return new CityDetailDto(
                 city.getName(),
                 city.getFavoriteStatus(),
                 latest.getTemperature(),
                 latest.getTimestamp()
-        );
+                );
     }
 
     //Получить количество городов
@@ -143,20 +103,7 @@ public class CityService {
     public void markAsFavorite(String cityName) {
         City city = cityRepository.findByName(cityName)
                 .orElseThrow(() -> new CityNotFoundException(cityName));
-
-        if (city.getFavoriteStatus() == FavoriteStatus.FAVORITE) {
-            log.debug("Город {} уже в избранном", cityName);
-            throw new CityAlreadyFavoriteException(cityName);
-        }
-
-        long favoriteCount = cityRepository.countByFavoriteStatus(FavoriteStatus.FAVORITE);
-        if (favoriteCount >= 3) {
-            throw new FavoritesLimitExceededException(cityName);
-        }
-
-        city.setFavoriteStatus(FavoriteStatus.FAVORITE);
-        cityRepository.save(city);
-        log.info("Город {} добавлен в избранное", cityName);
+        favoriteManager.addToFavorites(city);
     }
 
     //Удалить город из избранного
@@ -165,11 +112,6 @@ public class CityService {
         City city = cityRepository.findByName(cityName)
                 .orElseThrow(() -> new CityNotFoundException(cityName));
 
-        if (city.getFavoriteStatus() == FavoriteStatus.NOT_FAVORITE) {
-            throw new CityNotFavoriteException(cityName);
-        }
-        city.setFavoriteStatus(FavoriteStatus.NOT_FAVORITE);
-        cityRepository.save(city);
-        log.info("Город {} удалён из избранного", cityName);
+        favoriteManager.removeFromFavorites(city);
     }
 }

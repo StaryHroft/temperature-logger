@@ -10,6 +10,7 @@ import staryhroft.templog.dto.CityDetailDto;
 import staryhroft.templog.dto.CityRequestDto;
 import staryhroft.templog.service.CityService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -52,13 +53,18 @@ public class CityController {
 
     //Добавить город в избранное
     @PostMapping("/favorite/add")
-    public void addCityToFavorites(@Valid @RequestBody CityRequestDto request){
+    public ApiResponse<Void> addCityToFavorites(@Valid @RequestBody CityRequestDto request){
         cityService.markAsFavorite(request.getName());
+        return new ApiResponse<>(LocalDateTime.now(),
+                "Город " + request.getName() + " добавлен в избранное", null);
     }
 
     //Удалить город из избранного
     @PostMapping("/favorite/remove")
-    public void removeCityFromFavorites(@Valid @RequestBody CityRequestDto request){
+    public ApiResponse<Void> removeCityFromFavorites(@Valid @RequestBody CityRequestDto request){
         cityService.unmarkFromFavorite(request.getName());
+        return new ApiResponse<>(LocalDateTime.now(),
+                "Город " + request.getName() + " удалён из избранного", null);
+
     }
 }
