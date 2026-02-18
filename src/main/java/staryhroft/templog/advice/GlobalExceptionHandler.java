@@ -3,10 +3,12 @@ package staryhroft.templog.advice;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import staryhroft.templog.exception.business.CityAlreadyFavoriteException;
 import staryhroft.templog.exception.business.CityNotFavoriteException;
 import staryhroft.templog.exception.business.CityNotFoundException;
 import staryhroft.templog.exception.business.FavoritesLimitExceededException;
@@ -15,7 +17,6 @@ import staryhroft.templog.exception.external.WeatherApiException;
 import staryhroft.templog.exception.message.DatabaseErrorMessageBuilder;
 import staryhroft.templog.exception.message.NoHandlerFoundErrorMessageBuilder;
 import staryhroft.templog.exception.message.ValidationErrorMessageBuilder;
-import staryhroft.templog.exception.validation.InvalidCityNameException;
 import staryhroft.templog.dto.ErrorResponse;
 
 import java.time.LocalDateTime;
@@ -98,24 +99,53 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-
-
-    @ExceptionHandler({InvalidCityNameException.class,
-            FavoritesLimitExceededException.class,
-            CityNotFavoriteException.class})
-    public ResponseEntity<ErrorResponse> handleBadRequestExceptions(RuntimeException ex) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
+    @ExceptionHandler(CityAlreadyFavoriteException.class)
+    public ResponseEntity<ErrorResponse> handleCityAlreadyFavorite(CityAlreadyFavoriteException ex){
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
-                status.value(),
-                status.getReasonPhrase(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 "Ошибка запроса",
                 ex.getMessage()
         );
-        return new ResponseEntity<>(response, status);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(CityNotFavoriteException.class)
+    public ResponseEntity<ErrorResponse> handleCityNotFavorite(CityNotFavoriteException ex) {
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Ошибка запроса",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 
+    @ExceptionHandler(FavoritesLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleFavoritesLimitExceeded(FavoritesLimitExceededException ex) {
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Ошибка запроса",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex){
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "Ошибка аутентификации",
+                "Неверный логин или пароль"
+        );
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
 
 
 }

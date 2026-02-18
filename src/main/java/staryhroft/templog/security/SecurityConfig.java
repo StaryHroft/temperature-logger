@@ -15,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -35,7 +36,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE,"/api/cities").hasRole("ADMIN")        //удаление всех городов (DELETE) только админ
                         .anyRequest().authenticated()
                 )
-                .httpBasic(httpBasic -> httpBasic.init(http));
+                .httpBasic(httpBasic -> httpBasic.init(http))
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                );
     return http.build();
     }
 }

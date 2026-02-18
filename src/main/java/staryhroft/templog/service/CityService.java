@@ -10,6 +10,8 @@ import staryhroft.templog.dto.CityDetailDto;
 import staryhroft.templog.entity.City;
 import staryhroft.templog.entity.CityTemperature;
 import staryhroft.templog.entity.enums.FavoriteStatus;
+import staryhroft.templog.exception.business.CityAlreadyFavoriteException;
+import staryhroft.templog.exception.business.CityNotFavoriteException;
 import staryhroft.templog.exception.business.CityNotFoundException;
 import staryhroft.templog.exception.business.FavoritesLimitExceededException;
 import staryhroft.templog.repository.CityRepository;
@@ -144,13 +146,12 @@ public class CityService {
 
         if (city.getFavoriteStatus() == FavoriteStatus.FAVORITE) {
             log.debug("Город {} уже в избранном", cityName);
-            return;
+            throw new CityAlreadyFavoriteException(cityName);
         }
 
         long favoriteCount = cityRepository.countByFavoriteStatus(FavoriteStatus.FAVORITE);
         if (favoriteCount >= 3) {
-            throw new FavoritesLimitExceededException(
-                    "Нельзя добавить больше 3 избранных городов. Удалите один из текущих избранных");
+            throw new FavoritesLimitExceededException(cityName);
         }
 
         city.setFavoriteStatus(FavoriteStatus.FAVORITE);
@@ -165,7 +166,7 @@ public class CityService {
                 .orElseThrow(() -> new CityNotFoundException(cityName));
 
         if (city.getFavoriteStatus() == FavoriteStatus.NOT_FAVORITE) {
-            throw new FavoritesLimitExceededException("Город " + cityName + " не находится в избранном");
+            throw new CityNotFavoriteException(cityName);
         }
         city.setFavoriteStatus(FavoriteStatus.NOT_FAVORITE);
         cityRepository.save(city);
