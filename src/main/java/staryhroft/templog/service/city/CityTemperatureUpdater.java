@@ -14,7 +14,7 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class CityTempetratureUpdater {
+public class CityTemperatureUpdater {
     private final CityTemperatureRepository temperatureRepository;
     private final WeatherApiIntegration weatherApiIntegration;
 

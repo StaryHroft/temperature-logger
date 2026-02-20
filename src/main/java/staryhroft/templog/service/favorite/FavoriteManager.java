@@ -42,8 +42,4 @@ public class FavoriteManager {
         cityRepository.save(city);
         log.info("Город {} удалён из избранного", city.getName());
     }
-
-    public boolean isFavorite(City city){
-        return  city.getFavoriteStatus() == FavoriteStatus.FAVORITE;
-    }
 }
