@@ -1,4 +1,4 @@
-package staryhroft.templog.security;
+package staryhroft.templog.service.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

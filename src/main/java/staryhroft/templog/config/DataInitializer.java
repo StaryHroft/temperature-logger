@@ -8,37 +8,18 @@ import org.springframework.stereotype.Component;
 import staryhroft.templog.entity.User;
 import staryhroft.templog.entity.enums.Role;
 import staryhroft.templog.repository.UserRepository;
+import staryhroft.templog.service.UserService;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
 
     @Override
-    public void run(String... args) throws Exception {
-        if (userRepository.count() == 0) {
-            log.info("No users found, creating default users...");
-
-            User admin = User.builder()
-                    .username("admin")
-                    .password(passwordEncoder.encode("123"))
-                    .role(Role.ADMIN)
-                    .build();
-
-            User user = User.builder()
-                    .username("user")
-                    .password(passwordEncoder.encode("123"))
-                    .role(Role.USER)
-                    .build();
-
-            userRepository.save(admin);
-            userRepository.save(user);
-
-            log.info("Default users created: admin (ADMIN), user (USER)");
-        } else {
-            log.debug("Users already exist, skipping initialization");
-        }
+    public void run(String... args) {
+        log.info("Начинается инициализация данных...");
+        userService.initializeDefaultUsers();
+        log.info("Инициализация данных завершена.");
     }
 }

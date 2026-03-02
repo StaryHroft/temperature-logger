@@ -1,6 +1,7 @@
 package staryhroft.templog.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.internal.annotation.SuppressFBWarnings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -17,6 +18,7 @@ public class WeatherApiIntegration {
     private final String apiKey;
     private final String apiUrl;
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public WeatherApiIntegration(RestTemplate restTemplate,
                                  @Value("${weather.api.key}") String apiKey,
                                  @Value("${weather.api.url}") String apiUrl) {

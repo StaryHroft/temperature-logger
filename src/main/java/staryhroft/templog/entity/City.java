@@ -27,8 +27,10 @@ public class City {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private FavoriteStatus favoriteStatus = FavoriteStatus.NOT_FAVORITE;
 
     @OneToMany(mappedBy = "city", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<CityTemperature> temperatures = new ArrayList<>();
 }
