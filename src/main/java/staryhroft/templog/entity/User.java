@@ -21,16 +21,16 @@ public class User {
 
     @Column(nullable = false, unique = true, length = 50)
     @NotBlank(message = "Логин не может быть пустым")
-    @Pattern(regexp = "^[a-zA-Z0-9]{3,20}$",
-            message = "Логин должен содержать только латинские буквы и цифры," +
-                    " от 3 до 20 символов")
+//    @Pattern(regexp = "^[a-zA-Z0-9]{3,20}$",
+//            message = "Логин должен содержать только латинские буквы и цифры," +
+//                    " от 3 до 20 символов")
     private String username;
 
     @Column(nullable = false)
     @NotBlank(message = "Пароль не может быть пустым")
-    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$",
-            message = "Пароль должен содержать минимум 6 символов," +
-                    " включая хотя бы одну букву")
+//    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$",
+//            message = "Пароль должен содержать минимум 6 символов," +
+//                    " включая хотя бы одну букву")
     private String password;
 
     @Enumerated(EnumType.STRING)
