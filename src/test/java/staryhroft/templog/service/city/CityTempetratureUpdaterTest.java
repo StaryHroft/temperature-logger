@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import staryhroft.templog.entity.City;
 import staryhroft.templog.entity.CityTemperature;
 import staryhroft.templog.client.WeatherApiIntegration;
+import staryhroft.templog.integration.kafka.WeatherEventProducer;
 import staryhroft.templog.repository.CityTemperatureRepository;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,9 @@ class CityTempetratureUpdaterTest {
 
     @Mock
     private WeatherApiIntegration weatherApiIntegration;
+
+    @Mock
+    private WeatherEventProducer weatherEventProducer;
 
     @InjectMocks
     private CityTemperatureUpdater temperatureUpdater;
@@ -62,7 +66,7 @@ class CityTempetratureUpdaterTest {
 
     //вызывается ли АПИ при устаревшей температуре
     @Test
-    void getFreshTemperature_shouldCallApiAndSave_whenExistingRecordIsOutdated() {
+    void getFreshTemperature_shouldPublishEventAndReturnOldTemp_whenRecordIsOutdated() {
         // given
         City city = City.builder()
                 .id(3L)
@@ -79,24 +83,19 @@ class CityTempetratureUpdaterTest {
         when(temperatureRepository.findFirstByCityOrderByTimestampDesc(city))
                 .thenReturn(Optional.of(oldTemp));
 
-        when(weatherApiIntegration.getCurrentTemperature(city.getName()))
-                .thenReturn(11.5);
-
         // when
         Double result = temperatureUpdater.getFreshTemperature(city);
 
         // then
-        assertThat(result).isEqualTo(11.5);
+        assertThat(result).isEqualTo(10.0); // должна вернуться старая температура
 
         verify(temperatureRepository).findFirstByCityOrderByTimestampDesc(city);
-        verify(weatherApiIntegration).getCurrentTemperature(city.getName());
+        verify(weatherEventProducer).publishWeatherUpdate("London"); // проверили вызов продюсера
+        verifyNoMoreInteractions(weatherEventProducer); // необязательно
 
-        ArgumentCaptor<CityTemperature> temperatureCaptor = ArgumentCaptor.forClass(CityTemperature.class);
-        verify(temperatureRepository).save(temperatureCaptor.capture());
-
-        CityTemperature saved = temperatureCaptor.getValue();
-        assertThat(saved.getCity()).isSameAs(city);
-        assertThat(saved.getTemperature()).isEqualTo(11.5);
+        // Убеждаемся, что не было обращений к API и сохранений
+        verifyNoInteractions(weatherApiIntegration);
+        verify(temperatureRepository, never()).save(any());
     }
 
     //возвращается ли последняя запись
